@@ -4,15 +4,34 @@ DOCKER ?= docker
 MKDIR  ?= mkdir
 
 VERSION := 2.0.3
-PKG_REV := 1
-RUNTIME_VERSION := 2.0.0
 
-DIST_DIR  := $(CURDIR)/dist
+DIST_DIR := $(CURDIR)/dist
+
+#	ARCH=$(1)
+#	OS=$(2)
+#	VERSION_ID=$(3)
+define os_docker
+    $(DOCKER) build --build-arg VERSION_ID="$(3)" \
+        -t "nvidia_$(2)_$(3)" \
+        -f "Dockerfile.$(2)" .
+    $(MKDIR) -p "$(DIST_DIR)/$(2)$(3)/$(1)"
+    $(DOCKER) run  --cidfile $@.cid "nvidia_$(2)_$(3)"
+    $(DOCKER) cp $$(cat $@.cid):/dist/. "$(DIST_DIR)/$(2)$(3)/$(1)"
+    $(DOCKER) rm $$(cat $@.cid) && rm $@.cid
+endef
 
 .NOTPARALLEL:
 .PHONY: all
 
-all: ubuntu18.04 ubuntu16.04 ubuntu14.04 debian9 debian8 centos7 amzn2 amzn1
+all: ubuntu-latest ubuntu19.04 ubuntu18.10 ubuntu18.04 ubuntu16.04 ubuntu14.04 debian9 debian8 centos7 amzn2 amzn1
+
+ubuntu-latest: ubuntu19.04
+
+ubuntu19.04:
+	$(call os_docker,amd64,ubuntu,19.04)
+
+ubuntu18.10:
+	$(call os_docker,amd64,ubuntu,18.10)
 
 ubuntu18.04: $(addsuffix -ubuntu18.04, 18.09.2 18.06.2 18.09.1 18.09.0 18.06.1 18.06.0 18.03.1 17.12.1)
 
