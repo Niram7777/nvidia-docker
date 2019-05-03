@@ -7,6 +7,8 @@ VERSION := 2.0.3
 
 DIST_DIR := $(CURDIR)/dist
 
+UBUNTU_VERSION_ID := 19.04
+
 #	ARCH=$(1)
 #	OS=$(2)
 #	VERSION_ID=$(3)
@@ -25,7 +27,13 @@ endef
 
 all: ubuntu-latest ubuntu19.04 ubuntu18.10 ubuntu18.04 ubuntu16.04 ubuntu14.04 debian9 debian8 centos7 amzn2 amzn1
 
-ubuntu-latest: ubuntu19.04
+ubuntu-latest: ubuntu$(UBUNTU_VERSION_ID)
+	$(DOCKER) build --build-arg "from=ubuntu:$(UBUNTU_VERSION_ID)" \
+        -t "nvidia_ubuntu_$(UBUNTU_VERSION_ID)-base" \
+        -f opengl/Dockerfile opengl
+	$(DOCKER) build --build-arg "from=nvidia_ubuntu_$(UBUNTU_VERSION_ID)-base"  \
+        -t "nvidia_ubuntu_$(UBUNTU_VERSION_ID)-devel" \
+        -f opengl/Dockerfile.devel opengl
 
 ubuntu19.04:
 	$(call os_docker,amd64,ubuntu,19.04)
